@@ -1,0 +1,19 @@
+{
+  "name": "internet-automation",
+  "version": "1.0.0",
+  "description": "Playwright automation test suite cho the-internet.herokuapp.com",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "report": "npx playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.61.1"
+  }
+}
