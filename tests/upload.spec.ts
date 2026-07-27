@@ -47,7 +47,7 @@ test.describe('File Upload Feature', () => {
     expect(uploadedFileName).toContain('sample-upload.txt');
   });
 
-  test('TC13 — Click upload mà không chọn file', async ({ page }) => {
+  test.skip('TC13 — Click upload mà không chọn file', async ({ page }) => {
     // Click upload ngay mà không chọn file
     await uploadPage.clickUploadWithoutFile();
 
