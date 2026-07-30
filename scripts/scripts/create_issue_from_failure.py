@@ -4,7 +4,6 @@
 import json
 import os
 import subprocess
-import anthropic
 
 def parse_playwright_results(results_file: str) -> list[dict]:
     """Đọc test-results.json và trả về danh sách test failures."""
@@ -38,59 +37,41 @@ def parse_playwright_results(results_file: str) -> list[dict]:
 
 
 def generate_issue_with_claude(failure: dict) -> dict:
-    """Gọi Claude API để tạo GitHub Issue content."""
-    client = anthropic.Anthropic(api_key=os.environ['ANTHROPIC_API_KEY'])
+    """Tạo GitHub Issue content từ test failure data (không dùng AI)."""
+    # Parse error message để lấy thông tin chính
+    error_msg = failure['error']
+    
+    # Tạo title từ test name
+    title = f"[Test Failure] {failure['title'][:60]}"
+    
+    # Tạo body từ test failure info
+    body = f"""## 🐛 Test Failure
 
-    prompt = f"""
-Viết GitHub Issue từ Playwright test failure sau. Output chỉ gồm JSON với 2 fields: "title" và "body".
-Không có text nào khác ngoài JSON.
+**Test Name:** {failure['title']}
+**File:** {failure['file']}
+**Browser:** {failure['browser']}
+**Duration:** {failure['duration']}ms
 
-TEST FAILURE:
-- Test name: {failure['title']}
-- File: {failure['file']}
-- Error: {failure['error']}
-- Browser: {failure['browser']}
-- Duration: {failure['duration']}ms
-- Branch: {os.environ.get('GITHUB_REF_NAME', 'unknown')}
-- Commit: {os.environ.get('GITHUB_SHA', 'unknown')[:8]}
+## ❌ Error
+```
+{error_msg[:500]}
+```
 
-OUTPUT FORMAT (JSON only):
-{{
-  "title": "[Component] Mô tả ngắn gọn (dưới 80 ký tự)",
-  "body": "## 🐛 Mô tả lỗi\\n...\\n## 🔁 Steps to Reproduce\\n...\\n## ✅ Expected\\n...\\n## ❌ Actual\\n...\\n## 🌍 Environment\\n...\\n## 💥 Impact\\n..."
-}}
+## 📌 Details
+- **Branch:** {os.environ.get('GITHUB_REF_NAME', 'unknown')}
+- **Commit:** {os.environ.get('GITHUB_SHA', 'unknown')[:8]}
+
+## ✅ Next Steps
+1. Investigate the failure
+2. Fix the test or code
+3. Re-run workflow to verify
 """
+    
+    return {
+        "title": title,
+        "body": body
+    }
 
-    try:
-        message = client.messages.create(
-            model="claude-3-sonnet-20240229",
-            max_tokens=1000,
-            messages=[{"role": "user", "content": prompt}]
-        )
-
-        # Parse JSON response
-        response_text = message.content[0].text.strip()
-        
-        # Debug: print response if parsing fails
-        if not response_text:
-            print(f"ERROR: Empty response from Claude API")
-            return None
-        
-        # Try to extract JSON if response has extra text
-        import re
-        json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-        if json_match:
-            response_text = json_match.group(0)
-        
-        return json.loads(response_text)
-    except Exception as e:
-        print(f"ERROR generating issue with Claude: {str(e)}")
-        print(f"Response text: {response_text if 'response_text' in locals() else 'N/A'}")
-        # Return a fallback issue
-        return {
-            "title": f"[Test Failure] {failure['title'][:60]}",
-            "body": f"## Test Failure\n\n**File:** {failure['file']}\n\n**Error:**\n```\n{failure['error']}\n```\n\n**Browser:** {failure['browser']}"
-        }
 
 
 def create_github_issue(title: str, body: str, labels: list[str]) -> str:
