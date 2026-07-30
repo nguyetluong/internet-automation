@@ -40,6 +40,11 @@ module.exports = defineConfig({
     ['list']  // Hiển thị kết quả ngay trong terminal
   ],
 
+  reporter: [
+ ['html'],
+ ['json',{outputFile:'test-results.json'}],
+ ['list']
+],
   // Chỉ chạy trên Chrome (Chromium) cho đơn giản
   projects: [
     {

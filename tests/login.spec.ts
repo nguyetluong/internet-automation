@@ -22,7 +22,7 @@ test.describe('Login Feature', () => {
     await loginPage.login(VALID_USERNAME, VALID_PASSWORD);
     
     // Verify redirect sang /secure
-    await expect(page).toHaveURL(/.*secure/);
+    await expect(page).toHaveURL(/.*secure123/);
     
     // Verify flash message chứa thông báo thành công
     const flashText = await loginPage.getFlashMessage();
