@@ -61,15 +61,36 @@ OUTPUT FORMAT (JSON only):
 }}
 """
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=1000,
-        messages=[{"role": "user", "content": prompt}]
-    )
+    try:
+        message = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=1000,
+            messages=[{"role": "user", "content": prompt}]
+        )
 
-    # Parse JSON response
-    response_text = message.content[0].text.strip()
-    return json.loads(response_text)
+        # Parse JSON response
+        response_text = message.content[0].text.strip()
+        
+        # Debug: print response if parsing fails
+        if not response_text:
+            print(f"ERROR: Empty response from Claude API")
+            return None
+        
+        # Try to extract JSON if response has extra text
+        import re
+        json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+        if json_match:
+            response_text = json_match.group(0)
+        
+        return json.loads(response_text)
+    except Exception as e:
+        print(f"ERROR generating issue with Claude: {str(e)}")
+        print(f"Response text: {response_text if 'response_text' in locals() else 'N/A'}")
+        # Return a fallback issue
+        return {
+            "title": f"[Test Failure] {failure['title'][:60]}",
+            "body": f"## Test Failure\n\n**File:** {failure['file']}\n\n**Error:**\n```\n{failure['error']}\n```\n\n**Browser:** {failure['browser']}"
+        }
 
 
 def create_github_issue(title: str, body: str, labels: list[str]) -> str:
