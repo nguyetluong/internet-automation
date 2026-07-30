@@ -12,18 +12,28 @@ def parse_playwright_results(results_file: str) -> list[dict]:
         data = json.load(f)
 
     failures = []
-    for suite in data.get('suites', []):
-        for spec in suite.get('specs', []):
-            for test in spec.get('tests', []):
-                for result in test.get('results', []):
-                    if result['status'] == 'failed':
-                        failures.append({
-                            'title': spec['title'],
-                            'file': spec['file'],
-                            'error': result.get('error', {}).get('message', ''),
-                            'duration': result.get('duration', 0),
-                            'browser': test.get('projectName', 'chromium'),
-                        })
+    
+    def traverse_suites(suites):
+        """Đệ quy duyệt nested suites structure."""
+        for suite in suites:
+            # Duyệt specs trực tiếp trong suite
+            for spec in suite.get('specs', []):
+                for test in spec.get('tests', []):
+                    for result in test.get('results', []):
+                        if result['status'] == 'failed':
+                            failures.append({
+                                'title': spec['title'],
+                                'file': spec['file'],
+                                'error': result.get('error', {}).get('message', ''),
+                                'duration': result.get('duration', 0),
+                                'browser': test.get('projectName', 'chromium'),
+                            })
+            
+            # Duyệt nested suites
+            if 'suites' in suite:
+                traverse_suites(suite['suites'])
+    
+    traverse_suites(data.get('suites', []))
     return failures
 
 
