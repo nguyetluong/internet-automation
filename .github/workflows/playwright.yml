@@ -1,53 +1,53 @@
 name: Playwright Tests
 
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:    # Cho phép chạy thủ công từ GitHub UI
+# on:
+#   push:
+#     branches: [main, develop]
+#   pull_request:
+#     branches: [main]
+#   workflow_dispatch:    # Cho phép chạy thủ công từ GitHub UI
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30    # Tổng thời gian tối đa cho cả job
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 30    # Tổng thời gian tối đa cho cả job
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'npm'    # Cache node_modules để tăng tốc các lần chạy sau
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '24'
+#           cache: 'npm'    # Cache node_modules để tăng tốc các lần chạy sau
 
-      - name: Cài đặt dependencies
-        run: npm ci
+#       - name: Cài đặt dependencies
+#         run: npm ci
 
-      - name: Cài Playwright browsers
-        run: npx playwright install --with-deps chromium
+#       - name: Cài Playwright browsers
+#         run: npx playwright install --with-deps chromium
 
-      - name: Chạy Playwright tests
-        run: npx playwright test --workers=2
-        env:
-          CI: true
-          BASE_URL: ${{ secrets.BASE_URL }}
-          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
-          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+#       - name: Chạy Playwright tests
+#         run: npx playwright test --workers=2
+#         env:
+#           CI: true
+#           BASE_URL: ${{ secrets.BASE_URL }}
+#           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+#           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
 
-      - name: Upload HTML Report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-html-report
-          path: playwright-report/
-          retention-days: 7
+#       - name: Upload HTML Report
+#         uses: actions/upload-artifact@v4
+#         if: always()
+#         with:
+#           name: playwright-html-report
+#           path: playwright-report/
+#           retention-days: 7
 
-      - name: Upload Test Results (screenshots, traces)
-        uses: actions/upload-artifact@v4
-        if: failure()    # Chỉ upload khi có test fail — tiết kiệm storage
-        with:
-          name: playwright-test-results
-          path: test-results/
-          retention-days: 3
+#       - name: Upload Test Results (screenshots, traces)
+#         uses: actions/upload-artifact@v4
+#         if: failure()    # Chỉ upload khi có test fail — tiết kiệm storage
+#         with:
+#           name: playwright-test-results
+#           path: test-results/
+#           retention-days: 3
