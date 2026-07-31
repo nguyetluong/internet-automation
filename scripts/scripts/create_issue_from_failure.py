@@ -76,22 +76,39 @@ def generate_issue_with_claude(failure: dict) -> dict:
 
 def create_github_issue(title: str, body: str, labels: list[str]) -> str:
     """Dùng gh CLI để tạo GitHub Issue. Trả về URL của issue."""
-    label_args = []
-    for label in labels:
-        label_args.extend(['--label', label])
+    import re
+    import tempfile
+    
+    # Strip ANSI escape sequences từ body
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    body_clean = ansi_escape.sub('', body)
+    
+    # Viết body vào temp file để tránh escaping issues
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        f.write(body_clean)
+        temp_file = f.name
+    
+    try:
+        label_args = []
+        for label in labels:
+            label_args.extend(['--label', label])
 
-    result = subprocess.run(
-        ['gh', 'issue', 'create',
-         '--title', title,
-         '--body', body,
-         *label_args],
-        capture_output=True,
-        text=True,
-        check=True
-    )
+        result = subprocess.run(
+            ['gh', 'issue', 'create',
+             '--title', title,
+             '--body-file', temp_file,
+             *label_args],
+            capture_output=True,
+            text=True,
+            check=True
+        )
 
-    # gh trả về URL của issue vừa tạo
-    return result.stdout.strip()
+        # gh trả về URL của issue vừa tạo
+        return result.stdout.strip()
+    finally:
+        # Clean up temp file
+        os.unlink(temp_file)
+
 
 
 def main():
